@@ -1,8 +1,12 @@
 // Require the Client constructor from the pg package
+const {Client} = require('pg');
+
 
 // Create a constant, CONNECTION_STRING, from either process.env.DATABASE_URL or postgres://localhost:5432/phenomena-dev
-
+const CONNECTION_STRING = process.env.DATABASE_URL || 'postgres://localhost:5432/phenomena-dev'
 // Create the client using new Client(CONNECTION_STRING)
+const client = new Client(CONNECTION_STRING)
+
 // Do not connect to the client in this file!
 
 /**
@@ -56,21 +60,34 @@ async function getOpenReports() {
 async function createReport(reportFields) {
   // Get all of the fields from the passed in object
 
-
-  try {
+ const title = reportFields.title;
+ const location = reportFields.location;
+ const description = reportFields.description;
+ const password = reportFields.password;
+ try {
     // insert the correct fields into the reports table
+
+const SQL = `
+INSERT INTO reports(title, location, description, password)
+VALUES ($1, $2, $3, $4)
+RETURNING *
+`;
+const response = await client.query (SQL, [title, location, description, password])
+const report = response.rows[0];
+delete report.password;
+  
     // remember to return the new row from the query
     
 
     // remove the password from the returned row
-    
 
     // return the new report
-    
+    return report;
 
   } catch (error) {
     throw error;
   }
+
 }
 
 /**
@@ -178,3 +195,11 @@ async function createReportComment(reportId, commentFields) {
 }
 
 // export the client and all database functions below
+module.exports = {
+  client,
+  createReport,
+  getOpenReports,
+  _getReport,
+  createReportComment,
+  closeReport,
+}
