@@ -88,6 +88,7 @@ delete report.password;
     throw error;
   }
 
+  
 }
 
 /**
