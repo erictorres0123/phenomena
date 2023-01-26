@@ -24,6 +24,26 @@ const client = new Client(CONNECTION_STRING)
 async function getOpenReports() {
   try {
     // first load all of the reports which are open
+    const { rows: reports } = await client.query (`
+    SELECT * FROM reports
+    WHERE "isOpen"=true;
+    `);
+    for(let i = 0; i < reports.length; i++) {
+      const report = reports[i];
+      const { rows: comments } =  await client.query(`
+      SELECT * FROM comments where "reportId"=$1
+      `, [report.id]
+      );
+      report.comments = [];
+      for (let j = 0; j < comments.length; j++) {
+        report.comments.push(comments[j])
+      }
+      const expiration = Date.parse(report.expirationDate)
+      const currentDate = Date.now()
+      report.isExpired = expiration < currentDate;
+    }
+    console.log(reports)
+
     
 
     // then load the comments only for those reports, using a
@@ -40,8 +60,9 @@ async function getOpenReports() {
 
     // finally, return the reports
   
-
+    return reports;
   } catch (error) {
+    console.log(error)
     throw error;
   }
 }
